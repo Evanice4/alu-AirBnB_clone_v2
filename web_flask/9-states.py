@@ -1,40 +1,30 @@
 #!/usr/bin/python3
-"""Flask"""
-from flask import Flask, render_template
+"""Start web application with two routings
+"""
+
 from models import storage
 from models.state import State
-from models.city import City
-
-
+from flask import Flask, render_template
 app = Flask(__name__)
 
 
+@app.route('/states')
+@app.route('/states/<id>')
+def states_list(id=None):
+    """Render template with states
+    """
+    path = '9-states.html'
+    states = storage.all(State)
+    return render_template(path, states=states, id=id)
+
+
 @app.teardown_appcontext
-def teardown_session(exception):
-    """ Teardown """
+def app_teardown(arg=None):
+    """Clean-up session
+    """
     storage.close()
 
 
-@app.route('/states/', strict_slashes=False)
-@app.route('/states/<id>', strict_slashes=False)
-def display_html(id=None):
-    """ Function called with /states route """
-    states = storage.all(State)
-
-    if not id:
-        dict_to_html = {value.id: value.name for value in states.values()}
-        return render_template('7-states_list.html',
-                               Table="States",
-                               items=dict_to_html)
-
-    k = "State.{}".format(id)
-    if k in states:
-        return render_template('9-states.html',
-                               Table="State: {}".format(states[k].name),
-                               items=states[k])
-
-    return render_template('9-states.html',
-                           items=None)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
+    app.url_map.strict_slashes = False
     app.run(host='0.0.0.0', port=5000)
